@@ -8,6 +8,8 @@ WIDTH = 1280
 HEIGHT = 720
 BGCOLOR = '#1a1a2e'
 FUENTE = 'Minecraft'
+NOMBRE = ''
+AVATAR = ''
 
 VENTANA = Tk()
 VENTANA.minsize(WIDTH, HEIGHT)
@@ -96,5 +98,154 @@ Btn_puntuaciones.place(x=690, y=480)
 Pantalla_nombre_avatar = Canvas(VENTANA, bg=BGCOLOR, width=WIDTH, height=HEIGHT, highlightthickness=0)
 
 
+# Cargar avatares
+Pantalla_nombre_avatar.AVT_LaCobra = CargarImagen('AVT_LaCobra.png', 'Avatares')
+Pantalla_nombre_avatar.AVT_Messi = CargarImagen('AVT_Messi.png', 'Avatares')
+Pantalla_nombre_avatar.AVT_BadBunny = CargarImagen('AVT_BadBunny.png', 'Avatares')
+Pantalla_nombre_avatar.AVT_Speed = CargarImagen('AVT_Speed.png', 'Avatares')
+Pantalla_nombre_avatar.AVT_Goku = CargarImagen('AVT_Goku.png', 'Avatares')
+
+# Poner avatares
+Pantalla_nombre_avatar.create_image(59,72, anchor=NW, image=Pantalla_nombre_avatar.AVT_LaCobra, )
+Pantalla_nombre_avatar.create_image(298,72, anchor=NW, image=Pantalla_nombre_avatar.AVT_Messi)
+Pantalla_nombre_avatar.create_image(537,72, anchor=NW, image=Pantalla_nombre_avatar.AVT_BadBunny)
+Pantalla_nombre_avatar.create_image(776,72, anchor=NW, image=Pantalla_nombre_avatar.AVT_Speed)
+Pantalla_nombre_avatar.create_image(1015,72, anchor=NW, image=Pantalla_nombre_avatar.AVT_Goku)
+
+
+# FUNCIONES BOTONES CONFIRMAR
+
+borde_activo = None
+
+
+def FUNC_Btn_confirmar_lacobra():
+    global AVATAR
+    global borde_activo
+
+    AVATAR = 'LaCobra'
+
+    ReproducirBeep()
+
+    if borde_activo != None:
+        Pantalla_nombre_avatar.delete(borde_activo)
+
+    borde_activo = Pantalla_nombre_avatar.create_rectangle(
+    59-2, 72-2, 59+206+2, 72+262+2,
+    outline="#1fb4ff", width=4
+)
+    
+def FUNC_Btn_confirmar_messi():
+    global AVATAR
+    global borde_activo
+
+    AVATAR = 'Messi'
+
+    ReproducirBeep()
+
+    if borde_activo != None:
+        Pantalla_nombre_avatar.delete(borde_activo)
+
+    borde_activo = Pantalla_nombre_avatar.create_rectangle(
+    298-2, 72-2, 298+206+2, 72+262+2,
+    outline="#1fb4ff", width=4
+)
+    
+def FUNC_Btn_confirmar_badbunny():
+    global AVATAR
+    global borde_activo
+
+    AVATAR = 'BadBunny'
+
+    ReproducirBeep()
+
+    if borde_activo != None:
+        Pantalla_nombre_avatar.delete(borde_activo)
+
+    borde_activo = Pantalla_nombre_avatar.create_rectangle(
+    537-2, 72-2, 537+206+2, 72+262+2,
+    outline="#1fb4ff", width=4
+)
+
+    
+def FUNC_Btn_confirmar_speed():
+    global AVATAR
+    global borde_activo
+
+    AVATAR = 'Speed'
+
+    ReproducirBeep()
+
+    if borde_activo != None:
+        Pantalla_nombre_avatar.delete(borde_activo)
+
+    borde_activo = Pantalla_nombre_avatar.create_rectangle(
+    776-2, 72-2, 776+206+2, 72+262+2,
+    outline="#1fb4ff", width=4
+)
+    
+def FUNC_Btn_confirmar_goku():
+    global AVATAR
+    global borde_activo
+
+    AVATAR = 'Goku'
+
+    ReproducirBeep()
+
+    if borde_activo != None:
+        Pantalla_nombre_avatar.delete(borde_activo)
+
+    borde_activo = Pantalla_nombre_avatar.create_rectangle(
+    1015-2, 72-2, 1015+206+2, 72+262+2,
+    outline="#1fb4ff", width=4
+)
+    
+# Botones Confirmar
+
+# Boton Confirmar La Cobra
+Btn_confirmar_lacobra = Button(Pantalla_nombre_avatar, text='Confirmar'
+                   , width=206 - 20, height=47, 
+                   bg="#3A368A",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1', command=FUNC_Btn_confirmar_lacobra)
+Btn_confirmar_lacobra.place(x=59,y=360)
+
+# Boton Confirmar Messi
+Btn_confirmar_messi = Button(Pantalla_nombre_avatar, text='Confirmar'
+                   , width=206 - 20, height=47, 
+                   bg="#3A368A",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1', command=FUNC_Btn_confirmar_messi)
+Btn_confirmar_messi.place(x=298,y=360)
+
+Btn_confirmar_badbunny = Button(Pantalla_nombre_avatar, text='Confirmar'
+                   , width=206 - 20, height=47, 
+                   bg="#3A368A",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1', command=FUNC_Btn_confirmar_badbunny)
+Btn_confirmar_badbunny.place(x=537,y=360)
+
+Btn_confirmar_speed = Button(Pantalla_nombre_avatar, text='Confirmar'
+                   , width=206 - 20, height=47, 
+                   bg="#3A368A",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1', command=FUNC_Btn_confirmar_speed)
+Btn_confirmar_speed.place(x=776,y=360)
+
+Btn_confirmar_goku = Button(Pantalla_nombre_avatar, text='Confirmar'
+                   , width=206 - 20, height=47, 
+                   bg="#3A368A",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1', command=FUNC_Btn_confirmar_goku)
+Btn_confirmar_goku.place(x=1015,y=360)
 
 VENTANA.mainloop()
