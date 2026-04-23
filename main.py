@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import messagebox
-import time
 from os import path
 import vlc
 import random
@@ -909,8 +908,8 @@ def FUNC_Btn_confirmar_pokemones():
             POKEMONES.append(pokemon)
 
         CambiarPantalla(Pantalla_Combate_Pokemon)
+        IniciarCombate()
         ReproducirBeep()
-        print(POKEMONES, AVATAR, NOMBRE)
     else:
         messagebox.showwarning('ADVERTENCIA', 'DEBES SELECCIONAR 3 POKEMONES')
     
@@ -947,6 +946,115 @@ PANTALLA
 LUCHA POKEMON
 
 '''
-Pantalla_Combate_Pokemon = Canvas(VENTANA, bg=BGCOLOR, width=WIDTH, height=HEIGHT, highlightthickness=0)
+DATOS_POKEMONES = {
+    'Awachalot': {'vida': 120, 'ataque': 60,  'defensa': 40, 'vida_max': 120},
+    'Volcafrog':  {'vida': 90,  'ataque': 80,  'defensa': 30, 'vida_max': 90},
+    'Nobeltzal':  {'vida': 150, 'ataque': 40,  'defensa': 70, 'vida_max': 150},
+    'Morphosa':   {'vida': 100, 'ataque': 70,  'defensa': 50, 'vida_max': 100},
+    'Gladhuitl':  {'vida': 110, 'ataque': 65,  'defensa': 55, 'vida_max': 110},
+    'Elchemy':    {'vida': 80,  'ataque': 100, 'defensa': 20, 'vida_max': 80},
+    'Houndsoul':  {'vida': 130, 'ataque': 55,  'defensa': 60, 'vida_max': 130},
+    'Flamaya':    {'vida': 95,  'ataque': 85,  'defensa': 35, 'vida_max': 95},
+    'Turplane':   {'vida': 105, 'ataque': 75,  'defensa': 45, 'vida_max': 105},
+    'Pedri':      {'vida': 150, 'ataque': 150,  'defensa': 150, 'vida_max': 150},
+}
+
+pokemones_jugador = {}
+pokemones_rival = {}
+pokemon_activo_jugador = None
+pokemon_activo_rival = None
+puntaje_jugador = 0
+puntaje_rival = 0
+turno_bloqueado = False
+
+Pantalla_Combate_Pokemon = Canvas(VENTANA, bg="#0d0d1a", width=WIDTH, height=HEIGHT, highlightthickness=0)
+
+def IniciarCombate():
+    global pokemon_activo_jugador
+    global pokemon_activo_rival
+    global pokemon_activo_jugador
+    global pokemon_activo_rival
+    global DATOS_POKEMONES
+
+    # Pojemones del jugador
+    for pokemon in POKEMONES:
+        datos_originales = DATOS_POKEMONES[pokemon].copy()
+        pokemones_jugador[pokemon] = datos_originales
+
+    # Pokemones del rival
+    lista_nombres_pokemones = list(DATOS_POKEMONES.keys())
+    escoger_3_pokemones_random = random.sample(lista_nombres_pokemones, 3)
+
+    for pokemon in escoger_3_pokemones_random:
+        datos_originales = DATOS_POKEMONES[pokemon].copy()
+        pokemones_rival[pokemon] = datos_originales
+
+
+    pokemon_activo_jugador = POKEMONES[0]
+    pokemon_activo_rival = escoger_3_pokemones_random[0]
+
+def PokemonesVivos(diccionario):
+    lista_vivos = []
+    for nombre, stats in diccionario.items():
+        if stats['vida'] > 0:
+            lista_vivos.append(nombre)
+
+    return lista_vivos
+
+# -76 de hieght
+
+# Frame para poner botones atacar y cambiar pokemon
+frm_atacar_y_cambiarpok = Frame(Pantalla_Combate_Pokemon, width=463, height=174, bg='#123456')
+frm_atacar_y_cambiarpok.place(x=817,y=471)
+
+
+Btn_atacar = Button(frm_atacar_y_cambiarpok, text='Atacar'
+                   , width=410 + 5, height=87- 35, 
+                   bg="#8A3636",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1')
+Btn_atacar.place(x=10, y=10)
+
+Btn_cambiar_pokemon = Button(frm_atacar_y_cambiarpok, text='Cambiar Pokemon'
+                   , width=410 + 5, height=87- 35, 
+                   bg="#368A37",image=px, 
+                   compound=CENTER, font=(FUENTE, 20), 
+                   borderwidth=10, relief="raised", 
+                   activebackground='#192301', fg='#f1f1f1', 
+                   activeforeground='#f1f1f1')
+Btn_cambiar_pokemon.place(x=10, y=87)
+
+#Frame info
+Frm_info_batalla = Frame(Pantalla_Combate_Pokemon, bg="#123456", width=817, height=174)
+Frm_info_batalla.place(x=0, y=471)
+
+Lbl_info_batalla = Label(Frm_info_batalla)
+
+
+#Frame info jugador
+Frm_info_jugador = Frame(Pantalla_Combate_Pokemon, bg="#2B71B7", width=640, height=190 - 4)
+Frm_info_jugador.place(x=640, y=285)
+
+#Frame info rival
+Frm_info_rival = Frame(Pantalla_Combate_Pokemon, bg="#2B71B7", width=640, height=190 - 4)
+Frm_info_rival.place(x=0, y=0)
+
+
+# Placeholder avatares / pokemones\
+placeholder1 = Pantalla_Combate_Pokemon.create_rectangle(18, 200, 219, 489, fill="red", outline="black", width=2)
+placeholder2 = Pantalla_Combate_Pokemon.create_rectangle(18 + 219 , 245 - 20, 500 , 460, fill="white", outline="black", width=2)
+placeholder3 = Pantalla_Combate_Pokemon.create_rectangle((18) + 1030, 200 - 190, 219 + 1030, 489 -190, fill="red", outline="black", width=2)
+placeholder4 = Pantalla_Combate_Pokemon.create_rectangle(18 + 219 + 520, 245 - 20  -190, 500 + 520, 460 -190, fill="white", outline="black", width=2)
+
+def Atacar(atacante, defensor):
+    vida_perdida = max(0, atacante['ataque'] - defensor['defensa'])
+    defensor['vida'] -= vida_perdida
+    if defensor['vida'] < 0:
+        defensor['vida'] = 0
+    return vida_perdida
+
+Atacar(DATOS_POKEMONES['Awachalot'], DATOS_POKEMONES['Pedri'])
 
 VENTANA.mainloop()
