@@ -3,6 +3,8 @@ from tkinter import messagebox
 from os import path
 import vlc
 import random
+import os
+import json
 
 WIDTH = 1280
 HEIGHT = 720
@@ -28,7 +30,7 @@ FUNCIONES PRINCIPALES
 
 # Funcion cargar png
 def CargarImagen(png, carpeta):
-    ruta = path.join(f'Media\{carpeta}', png)
+    ruta = path.join(f'Media/{carpeta}', png)
     img = PhotoImage(file=ruta)
     return img
 
@@ -40,6 +42,34 @@ def ReproducirSFX(MP3):
 
 def ReproducirBeep():
     ReproducirSFX(CargarMP3('SFX_beep.mp3', 'SFX'))
+
+reproductor = vlc.MediaPlayer()
+def ReproducirCancion(MP3):
+    global reproductor
+    DetenerCancion()
+    reproductor = vlc.MediaPlayer(MP3)
+    reproductor.audio_set_volume(100)
+    reproductor.play()
+
+def DetenerCancion():
+    if(isinstance(reproductor,vlc.MediaPlayer)):
+        reproductor.stop()
+
+def ReproducirCancionLaCobra():
+    ReproducirCancion(CargarMP3('LaCobra.mp3', 'Musica'))
+
+def ReproducirCancionMessi():
+    ReproducirCancion(CargarMP3('Messi.mp3', 'Musica'))
+
+def ReproducirCancionBadBunny():
+    ReproducirCancion(CargarMP3('BadBunny.mp3', 'Musica'))
+
+def ReproducirCancionSpeed():
+    ReproducirCancion(CargarMP3('Speed.mp3', 'Musica'))
+
+def ReproducirCancionGoku():
+    ReproducirCancion(CargarMP3('Goku.mp3', 'Musica'))
+
 
 pantalla_actual = Pantalla_principal
 def CambiarPantalla(nueva):
@@ -83,7 +113,9 @@ Btn_jugar.place(x=100, y=480)
 # Boton Puntuaciones
 
 def FUNC_Btn_puntuaciones():
+    global Pantalla_puntajes
     ReproducirBeep()
+    CambiarPantallaPuntajes(Pantalla_puntajes)
 
 Btn_puntuaciones = Button(Pantalla_principal, text='PUNTACIONES'
                    , width=487, height=50, 
@@ -902,14 +934,15 @@ Btn_deseleccionar_Pedri.place(x=110, y=195)
 def FUNC_Btn_confirmar_pokemones():
     global PokemonsSeleccionados
     global POKEMONES
+    ReproducirBeep()
     if len(PokemonsSeleccionados) == 3:
         # Confirmar Pokemones
         for pokemon in PokemonsSeleccionados:
             POKEMONES.append(pokemon)
 
-        CambiarPantalla(Pantalla_Combate_Pokemon)
         IniciarCombate()
-        ReproducirBeep()
+        CambiarPantalla(Pantalla_Combate_Pokemon)
+        
     else:
         messagebox.showwarning('ADVERTENCIA', 'DEBES SELECCIONAR 3 POKEMONES')
     
@@ -956,7 +989,7 @@ DATOS_POKEMONES = {
     'Houndsoul':  {'vida': 130, 'ataque': 55,  'defensa': 60, 'vida_max': 130},
     'Flamaya':    {'vida': 95,  'ataque': 85,  'defensa': 35, 'vida_max': 95},
     'Turplane':   {'vida': 105, 'ataque': 75,  'defensa': 45, 'vida_max': 105},
-    'Pedri':      {'vida': 150, 'ataque': 150,  'defensa': 150, 'vida_max': 150},
+    'Pedri':      {'vida': 140, 'ataque': 50,  'defensa': 80, 'vida_max': 140},
 }
 
 pokemones_jugador = {}
@@ -975,8 +1008,17 @@ def IniciarCombate():
     global pokemon_activo_jugador
     global pokemon_activo_rival
     global DATOS_POKEMONES
+    global puntaje_jugador
+    global puntaje_rival
+    global AVATAR_RIVAL
 
-    # Pojemones del jugador
+    pokemones_jugador.clear()
+    pokemones_rival.clear()
+
+    puntaje_jugador = 0
+    puntaje_rival = 0
+
+    # Pokemones del jugador
     for pokemon in POKEMONES:
         datos_originales = DATOS_POKEMONES[pokemon].copy()
         pokemones_jugador[pokemon] = datos_originales
@@ -990,8 +1032,14 @@ def IniciarCombate():
         pokemones_rival[pokemon] = datos_originales
 
 
-    pokemon_activo_jugador = POKEMONES[0]
-    pokemon_activo_rival = escoger_3_pokemones_random[0]
+    pokemon_activo_jugador = list(pokemones_jugador.keys())[0]
+    pokemon_activo_rival = list(pokemones_rival.keys())[0]
+
+    ReproducirCancionBatalla()
+    ActualizarPantalladeCombate()
+    VerificarAvatar()
+    MostrarMensaje(f'{NOMBRE} vs {AVATAR_RIVAL}')
+
 
 def PokemonesVivos(diccionario):
     lista_vivos = []
@@ -1001,12 +1049,366 @@ def PokemonesVivos(diccionario):
 
     return lista_vivos
 
-# -76 de hieght
 
+def ColorBarra(porcentaje):
+    #Verde > 50%, Amarillo > 25%, Rojo <= 25
+    if porcentaje > 0.5:
+        return '#55c855'
+    elif porcentaje > 0.25:
+        return '#c8c855'
+    return '#c85555'
+
+
+def Atacar(atacante, defensor):
+    vida_perdida = max(0, atacante['ataque'] - defensor['defensa'])
+    defensor['vida'] -= vida_perdida
+    if defensor['vida'] < 0:
+        defensor['vida'] = 0
+    return vida_perdida
+
+def TurnoJugador():
+    global turno_bloqueado
+    if turno_bloqueado == True:
+        return
+    turno_bloqueado = True
+
+    atacante = pokemones_jugador[pokemon_activo_jugador]
+    defensor = pokemones_rival[pokemon_activo_rival]
+
+    daño = Atacar(atacante, defensor)  # CAMBIO 1: guardar el valor retornado por Atacar()
+
+    MostrarMensaje(f"{pokemon_activo_jugador} ataco a {pokemon_activo_rival} e hizo {daño} de daño")  # CAMBIO 2: mostrar mensaje con el daño
+    ActualizarPantalladeCombate()
+    VerificarKO()  # CAMBIO 3: verificar si el rival cayó en KO después del ataque del jugador
+
+    # Solo programar turno rival si aún hay pokemones vivos de ambos lados
+    if PokemonesVivos(pokemones_rival) != [] and PokemonesVivos(pokemones_jugador) != []:
+        VENTANA.after(2000, TurnoRival)
+
+        
+def TurnoRival():
+    global pokemon_activo_rival, turno_bloqueado
+
+    pokemones_vivos = PokemonesVivos(pokemones_rival)
+
+    # Si hay mas de uno vivo el rival puede cambiar (30% de prob.)
+    if len(pokemones_vivos) > 1 and random.random() < 0.30:
+        opciones_cambio = []
+        for pokemon in pokemones_vivos:
+            if pokemon != pokemon_activo_rival:
+                opciones_cambio.append(pokemon)
+
+        nuevo = random.choice(opciones_cambio)
+        pokemon_activo_rival = nuevo
+        MostrarMensaje(f"Rival cambio a {nuevo}")
+        ActualizarPantalladeCombate()
+        VerificarKO()
+    else:
+        # Atacar
+        atacante = pokemones_rival[pokemon_activo_rival]
+        defensor = pokemones_jugador[pokemon_activo_jugador]
+        daño = Atacar(atacante, defensor)
+        MostrarMensaje(f"{pokemon_activo_rival} ataco a {pokemon_activo_jugador} e hizo {daño} de daño ")
+        ActualizarPantalladeCombate()
+        VerificarKO()
+
+    turno_bloqueado = False
+    
+def VerificarKO():
+    global pokemon_activo_jugador
+    global pokemon_activo_rival
+    global puntaje_jugador
+    global puntaje_rival
+
+    rival_actual = pokemones_rival.get(pokemon_activo_rival)
+    jugador_actual = pokemones_jugador.get(pokemon_activo_jugador)
+
+    # Si rival recive KO
+    if rival_actual and rival_actual['vida'] <= 0:
+        puntaje_jugador += 1
+        pokemon_derrotado = pokemon_activo_rival
+
+        # Transferir pokemon al jugador
+        nuevas_estadisticas = DATOS_POKEMONES[pokemon_derrotado].copy()
+        pokemones_jugador[pokemon_derrotado] = nuevas_estadisticas
+        del pokemones_rival[pokemon_derrotado]
+
+        MostrarMensaje(f'{pokemon_derrotado} fue derrotado, ahora es tuyo')
+        ActualizarPantalladeCombate()
+
+        vivos_rival = PokemonesVivos(pokemones_rival)
+        if vivos_rival == []:
+            VENTANA.after(2000, lambda:FinJuego('jugador'))
+            return
+        else:
+            pokemon_activo_rival = vivos_rival[0]
+            MostrarMensaje(f'Rival saca a {pokemon_activo_rival}')
+            ActualizarPantalladeCombate()
+
+    # Si jugador recive KO
+    if jugador_actual and jugador_actual['vida'] <= 0:
+        puntaje_rival += 1
+        pokemon_derrotado = pokemon_activo_jugador
+
+        # Transferir pokemon al jugador
+        nuevas_estadisticas = DATOS_POKEMONES[pokemon_derrotado].copy()
+        pokemones_rival[pokemon_derrotado] = nuevas_estadisticas
+        del pokemones_jugador[pokemon_derrotado]
+
+        MostrarMensaje(f'{pokemon_derrotado} fue derrotado, ahora es de tu rival JAJA')
+        ActualizarPantalladeCombate()
+
+        vivos_jugador = PokemonesVivos(pokemones_jugador)
+        if vivos_jugador == []:
+            VENTANA.after(2000, lambda:FinJuego('rival'))
+            return
+        else:
+            MostrarCambioForzado()
+
+
+def FinJuego(ganador):
+    if ganador == 'jugador':
+        MostrarMensaje(f'Ganaste, tienes un puntaje de {puntaje_jugador}')
+        GuardarPuntaje(NOMBRE, puntaje_jugador, AVATAR)
+    else:
+        MostrarMensaje('Perdiste...')
+    DetenerCancion()
+    CambiarPantallaPuntajes(Pantalla_puntajes)
+
+
+# Cambio de Pokemones
+botones_cambio = []
+
+def MostrarOpcionesCambio(forzado=False):
+    global botones_cambio
+
+    LimpiarBotonesCambio()
+
+    vivos = []
+    for pokemon in PokemonesVivos(pokemones_jugador):
+        if pokemon != pokemon_activo_jugador:
+            vivos.append(pokemon)
+
+    if vivos == []:
+        return # no hay q cambiar nada
+    
+    Lbl_info_batalla.place_forget()
+
+    Lbl_info_cambio = Label(Frm_info_batalla, text='A cual cambis?',
+          font=(FUENTE, 20), bg='#0d0d1a', fg='#aaaaff')
+    Lbl_info_cambio.place(x=10, y=8)
+
+    lista_enumerada = enumerate(vivos)
+    for i, nombre in lista_enumerada:
+        stats = pokemones_jugador[nombre]
+        texto = f'{nombre}  HP:{stats["vida"]}/{stats["vida_max"]}'
+        Btn_temp = Button(Frm_info_batalla,
+            text=texto,
+            width=180, height=28,
+            bg='#3A368A', image=px,
+            compound=CENTER, font=(FUENTE, 11),
+            borderwidth=6, relief='raised',
+            fg='#f1f1f1', activebackground='#1a1a6a',
+            activeforeground='#f1f1f1',
+            command=lambda n=nombre, f=forzado: ConfirmarCambio(n, f))
+        Btn_temp.place(x=10 + (i * 210), y=40)
+        botones_cambio.append(Btn_temp)
+    
+    # Boton cancelar (SOLO SI NO ES FORZADO)
+    if forzado != True:
+        Btn_cancelar = Button(
+            Frm_info_batalla, text='Cancelar',
+            width=100, height=28,
+            bg='#5a1a1a', image=px,
+            compound=CENTER, font=(FUENTE, 11),
+            borderwidth=6, relief='raised',
+            fg='#f1f1f1', activebackground='#3a0a0a',
+            activeforeground='#f1f1f1',
+            command=CancelarCambio
+        )
+        Btn_cancelar.place(x=10, y=100)
+        botones_cambio.append(Btn_cancelar)
+
+def MostrarCambioForzado():
+    MostrarOpcionesCambio(forzado=True)
+
+def ConfirmarCambio(nombre, forzado):
+    global pokemon_activo_jugador
+    global turno_bloqueado
+    pokemon_activo_jugador = nombre
+
+    LimpiarBotonesCambio()
+
+    Lbl_info_batalla.place(x=10, y=10)
+    MostrarMensaje(f'Cambiaste a {nombre}')
+    ActualizarPantalladeCombate()
+
+    
+    # Si no fue forzado el rival ataca despues del cambio
+    if forzado != True:
+        turno_bloqueado = True
+        VENTANA.after(2000, TurnoRival)
+
+def CancelarCambio():
+    LimpiarBotonesCambio()
+    Lbl_info_batalla.place(x=10, y=10)
+
+def LimpiarBotonesCambio():
+    global botones_cambio
+
+    for boton in botones_cambio:
+        boton.destroy()
+    botones_cambio = []
+
+    # Limpiar el label de "A cual Cambias?"
+    for widget in Frm_info_batalla.winfo_children(): #Lista de widgets hijos de un frame
+        if isinstance(widget, Label) and widget != Lbl_info_batalla:
+            widget.destroy()
+
+
+# ACTUALIZAR PANTALLA
+
+def ActualizarInfoFrame(frame, nombre_entrenador, nombre_pokemon, stats, es_jugador):
+    # Actualiza el Frm_info con los datos actuales de el que combate
+
+    # Limpiar widgets
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    width_frame = 640
+    height_frame = 186
+
+
+    # Seccion superior
+    alto_superior = int(height_frame * 0.8)
+    Frm_superior = Frame(frame, bg='#1a2a4a', width=width_frame, height=alto_superior)
+    Frm_superior.place(x=0, y=0)
+    Frm_superior.pack_propagate(False) # Que no se adapte
+
+    # Nombre entrenador
+    Lbl_entrenador_nombre = Label(Frm_superior, text=nombre_entrenador,
+          font=(FUENTE, 11), bg='#1a2a4a', fg='#aaaaee')
+    Lbl_entrenador_nombre.place(x=10, y=8)
+
+    # Nombre pokemon
+    color_nombre_pokemon = ''
+    if es_jugador == True:
+        color_nombre_pokemon = '#6bff6b'
+    else:
+        color_nombre_pokemon = '#ff6b6b'
+
+    Lbl_nombre_pokemon = Label(Frm_superior, text=nombre_pokemon,
+          font=(FUENTE, 22), bg='#1a2a4a', fg=color_nombre_pokemon)
+    Lbl_nombre_pokemon.place(x=10, y=32)
+
+    # Hp text
+    vida_actual = stats['vida']
+    vida_max = stats['vida_max']
+    Lbl_vida = Label(Frm_superior, text=f'HP: {vida_actual} / {vida_max}',
+          font=(FUENTE, 12), bg='#1a2a4a', fg='#e8e8ff')
+    Lbl_vida.place(x=10, y=68)
+
+    # Barra vida
+    barra_total = 400
+    porcentaje = vida_actual / vida_max if vida_max > 0 else 0  # CAMBIO 4: evitar division por cero
+    barra_llena = int(barra_total * porcentaje)
+
+    Cnv_barra = Canvas(Frm_superior, width=barra_total + 4, height=18,
+                       bg='#333355', highlightthickness=1, highlightbackground='#555577')
+    Cnv_barra.place(x=10, y=95)
+    
+    if barra_llena > 0:
+        Cnv_barra.create_rectangle(0,0, barra_llena, 18, fill=ColorBarra(porcentaje), outline='')
+
+    # Ataque y defensa
+    Lbl_atk_def = Label(Frm_superior, text=f'ATK {stats["ataque"]}   DEF {stats["defensa"]}',
+          font=(FUENTE, 9), bg='#1a2a4a', fg='#7777aa')
+    Lbl_atk_def.place(x=10, y=118)
+
+
+
+    # Seccion Inferior (pokemones disponibles)
+    alto_inferior = height_frame - alto_superior
+    Frm_inferior = Frame(frame, bg='#111133', width=width_frame, height=alto_inferior)
+    Frm_inferior.place(x=0, y=alto_superior)
+
+    dict_pokemones = []
+    if es_jugador == True:
+        dict_pokemones = pokemones_jugador
+    else:
+        dict_pokemones = pokemones_rival
+    
+    # Bolitas
+    Cnv_bolitas = Canvas(Frm_inferior, width=300, height=alto_inferior, 
+                         bg='#111133', highlightthickness=0)
+    Cnv_bolitas.place(x=10, y=2)
+
+    i=0
+    for nombre_pokemon in dict_pokemones:
+        stat = dict_pokemones[nombre_pokemon]
+
+        x = 14 + (i * 30)
+        y = 18
+
+        if stat['vida'] > 0:
+            color = '#55c855'
+            borde = '#aaffaa'
+        else:
+            color = '#444444'
+            borde = '#333333'
+        
+        if es_jugador == True:
+            pokemon_activo = pokemon_activo_jugador
+        else:
+            pokemon_activo = pokemon_activo_rival
+        
+        if nombre_pokemon == pokemon_activo:
+            activo = True
+        else:
+            activo = False
+
+        # grosor
+        if activo == True:
+            grosor = 3
+        else:
+            grosor = 1
+
+        # dibujar en pantalla
+        Cnv_bolitas.create_oval(x-12, y-12, x+12, y+12, fill=color,
+        outline=borde,
+        width=grosor)
+
+        i += 1
+
+def ActualizarPantalladeCombate():
+    global AVATAR_RIVAL
+    DibujarPokemon()
+    # Info Jugador
+    if pokemon_activo_jugador in pokemones_jugador:
+        ActualizarInfoFrame(Frm_info_jugador, f'{NOMBRE}  score: {puntaje_jugador}',
+            pokemon_activo_jugador,
+            pokemones_jugador[pokemon_activo_jugador],
+            es_jugador=True)
+        
+    if pokemon_activo_rival in pokemones_rival:
+        ActualizarInfoFrame(Frm_info_rival, f'{AVATAR_RIVAL}  score: {puntaje_rival}',
+            pokemon_activo_rival,
+            pokemones_rival[pokemon_activo_rival],
+            es_jugador=False)
+    
+def MostrarMensaje(texto):
+    Lbl_info_batalla.config(text=texto, font=(FUENTE, 30), bg="#0d0d1a")
+
+
+
+# -76 height
 # Frame para poner botones atacar y cambiar pokemon
-frm_atacar_y_cambiarpok = Frame(Pantalla_Combate_Pokemon, width=463, height=174, bg='#123456')
+frm_atacar_y_cambiarpok = Frame(Pantalla_Combate_Pokemon, width=463, height=174, bg='#0d0d1a')
 frm_atacar_y_cambiarpok.place(x=817,y=471)
 
+def FUNC_Btn_atacar():
+    ReproducirBeep()
+    TurnoJugador()
 
 Btn_atacar = Button(frm_atacar_y_cambiarpok, text='Atacar'
                    , width=410 + 5, height=87- 35, 
@@ -1014,8 +1416,12 @@ Btn_atacar = Button(frm_atacar_y_cambiarpok, text='Atacar'
                    compound=CENTER, font=(FUENTE, 20), 
                    borderwidth=10, relief="raised", 
                    activebackground='#192301', fg='#f1f1f1', 
-                   activeforeground='#f1f1f1')
+                   activeforeground='#f1f1f1', command=FUNC_Btn_atacar)
 Btn_atacar.place(x=10, y=10)
+
+def FUNC_Btn_cambiar_pokemon():
+    ReproducirBeep()
+    MostrarOpcionesCambio(forzado=False)
 
 Btn_cambiar_pokemon = Button(frm_atacar_y_cambiarpok, text='Cambiar Pokemon'
                    , width=410 + 5, height=87- 35, 
@@ -1023,14 +1429,20 @@ Btn_cambiar_pokemon = Button(frm_atacar_y_cambiarpok, text='Cambiar Pokemon'
                    compound=CENTER, font=(FUENTE, 20), 
                    borderwidth=10, relief="raised", 
                    activebackground='#192301', fg='#f1f1f1', 
-                   activeforeground='#f1f1f1')
+                   activeforeground='#f1f1f1', command=FUNC_Btn_cambiar_pokemon)
 Btn_cambiar_pokemon.place(x=10, y=87)
 
 #Frame info
-Frm_info_batalla = Frame(Pantalla_Combate_Pokemon, bg="#123456", width=817, height=174)
+Frm_info_batalla = Frame(Pantalla_Combate_Pokemon, bg="#0d0d1a", width=817, height=174)
 Frm_info_batalla.place(x=0, y=471)
 
-Lbl_info_batalla = Label(Frm_info_batalla)
+Lbl_info_batalla = Label(Frm_info_batalla,
+    text='',
+    font=(FUENTE, 14),
+    bg='#0d0d1a', fg='#e8e8ff',
+    wraplength=790 , justify=LEFT
+)
+Lbl_info_batalla.place(x=14, y=14)
 
 
 #Frame info jugador
@@ -1042,19 +1454,170 @@ Frm_info_rival = Frame(Pantalla_Combate_Pokemon, bg="#2B71B7", width=640, height
 Frm_info_rival.place(x=0, y=0)
 
 
-# Placeholder avatares / pokemones\
-placeholder1 = Pantalla_Combate_Pokemon.create_rectangle(18, 200, 219, 489, fill="red", outline="black", width=2)
-placeholder2 = Pantalla_Combate_Pokemon.create_rectangle(18 + 219 , 245 - 20, 500 , 460, fill="white", outline="black", width=2)
-placeholder3 = Pantalla_Combate_Pokemon.create_rectangle((18) + 1030, 200 - 190, 219 + 1030, 489 -190, fill="red", outline="black", width=2)
-placeholder4 = Pantalla_Combate_Pokemon.create_rectangle(18 + 219 + 520, 245 - 20  -190, 500 + 520, 460 -190, fill="white", outline="black", width=2)
+# Placeholder avatares / pokemones
+AVATAR_RIVAL = ''
+def VerificarAvatar():
+    global AVATAR, AVATAR_RIVAL
+    if AVATAR == 'LaCobra':
+        AVATAR_RIVAL = 'Davo'
+    if AVATAR == 'Messi':
+        AVATAR_RIVAL = 'CR7'
+    if AVATAR == 'BadBunny':
+        AVATAR_RIVAL = 'Anuel'
+    if AVATAR == 'Speed':
+        AVATAR_RIVAL = 'Ibai'
+    if AVATAR == 'Goku':
+        AVATAR_RIVAL = 'Vegetta'
+    
+    Pantalla_Combate_Pokemon.AVT_jugador_dibujar = CargarImagen(f'COMB_{AVATAR}.png', 'Avatares')
+    Pantalla_Combate_Pokemon.create_image(18, 200, anchor=NW, image=Pantalla_Combate_Pokemon.AVT_jugador_dibujar)
 
-def Atacar(atacante, defensor):
-    vida_perdida = max(0, atacante['ataque'] - defensor['defensa'])
-    defensor['vida'] -= vida_perdida
-    if defensor['vida'] < 0:
-        defensor['vida'] = 0
-    return vida_perdida
+    Pantalla_Combate_Pokemon.AVT_rival_dibujar = CargarImagen(f'COMB_{AVATAR_RIVAL}.png', 'Avatares')
+    Pantalla_Combate_Pokemon.create_image(1048, 10, anchor=NW, image=Pantalla_Combate_Pokemon.AVT_rival_dibujar)
 
-Atacar(DATOS_POKEMONES['Awachalot'], DATOS_POKEMONES['Pedri'])
+def ReproducirCancionBatalla():
+    global AVATAR
+    if AVATAR == 'LaCobra':
+        ReproducirCancionLaCobra()
+    if AVATAR == 'Messi':
+        ReproducirCancionMessi()
+    if AVATAR == 'BadBunny':
+        ReproducirCancionBadBunny()
+    if AVATAR == 'Speed':
+        ReproducirCancionSpeed()
+    if AVATAR == 'Goku':
+        ReproducirCancionGoku()
 
+def DibujarPokemon():
+    global pokemon_activo_jugador
+    global pokemon_activo_rival
+    
+    Pantalla_Combate_Pokemon.POK_jugador_dijubar = CargarImagen(f'{pokemon_activo_jugador}_darkblue_bg.png', 'Pokemones')
+    Pantalla_Combate_Pokemon.create_image(237, 225, anchor=NW, image=Pantalla_Combate_Pokemon.POK_jugador_dijubar)
+
+    Pantalla_Combate_Pokemon.POK_rival_dijubar = CargarImagen(f'{pokemon_activo_rival}_darkblue_bg.png', 'Pokemones')
+    Pantalla_Combate_Pokemon.create_image(757, 35, anchor=NW, image=Pantalla_Combate_Pokemon.POK_rival_dijubar)
+    
+
+
+'''
+GUARDAR PUNTAJEEEEES   !!!
+'''
+
+ARCHIVO_PUNTAJES = 'puntajes.json'
+
+def CargarPuntajes():
+    if os.path.exists(ARCHIVO_PUNTAJES):
+        with open(ARCHIVO_PUNTAJES, 'r') as f:
+            return json.load(f)
+    return []
+
+def ObtenerPuntaje(x):
+    return x['puntaje']
+
+def GuardarPuntaje(nombre, puntaje, avatar):
+    lista = CargarPuntajes()
+    lista.append({'nombre': nombre, 'puntaje' : puntaje, 'avatar': avatar})
+    # Ordenar descendente y guarda solo top 10
+    lista.sort(key=ObtenerPuntaje, reverse=True)
+    lista = lista [:10]
+    with open(ARCHIVO_PUNTAJES, 'w') as f:
+        json.dump(lista, f)
+
+
+Pantalla_puntajes = Canvas(VENTANA, bg=BGCOLOR, width=WIDTH, height=HEIGHT, highlightthickness=0)
+
+Lbl_titulo_puntajes = Label(Pantalla_puntajes, text='MEJORES PUNTAJES',
+    font=(FUENTE, 30), bg=BGCOLOR, fg='#FFD700')
+Lbl_titulo_puntajes.place(x=WIDTH//2, y=40, anchor=CENTER)
+
+Frm_tabla_puntajes = Frame(Pantalla_puntajes, bg='#16213e', width=700, height=400)
+Frm_tabla_puntajes.place(x=WIDTH//2 - 350, y=100)
+
+
+
+def ActualizarPantallaPuntajes():
+    # Limpiar tabla
+    for widget in Frm_tabla_puntajes.winfo_children():
+        widget.destroy()
+
+    lista = CargarPuntajes()
+
+    Label(Frm_tabla_puntajes, text='#',
+      font=(FUENTE, 14), bg='#16213e', fg='#aaaaee', width=4).place(x=20, y=10)
+    Label(Frm_tabla_puntajes, text='Nombre',
+      font=(FUENTE, 14), bg='#16213e', fg='#aaaaee', width=18).place(x=70, y=10)
+    Label(Frm_tabla_puntajes, text='Avatar',
+      font=(FUENTE, 14), bg='#16213e', fg='#aaaaee', width=14).place(x=290, y=10)
+    Label(Frm_tabla_puntajes, text='Puntaje',
+      font=(FUENTE, 14), bg='#16213e', fg='#aaaaee', width=10).place(x=500, y=10)
+    
+    Frame(Frm_tabla_puntajes, bg='#3a3a6a', width=620, height=2).place(x=20, y=45)
+
+    # Si no hay datos
+    if not lista:
+        Label(Frm_tabla_puntajes,
+          text='Aún no hay puntajes guardados.',
+          font=(FUENTE, 13),
+          bg='#16213e',
+          fg='#555577').place(x=190, y=90)
+    else:
+        colores_podio = ['#FFD700', '#C0C0C0', '#CD7F32']
+
+        for i, entrada in enumerate(lista):
+
+            y = 60 + (i * 35)
+
+            if i < 3:
+                color_texto = colores_podio[i]
+            else:
+                color_texto = '#e8e8ff'
+            
+            if i % 2 == 0:
+                bg_fila = '#1a1a3e'
+            else:
+                bg_fila = '#16213e'
+
+            Label(Frm_tabla_puntajes, text=f'{i+1}',
+              font=(FUENTE, 13),
+              bg=bg_fila,
+              fg=color_texto,
+              width=4).place(x=20, y=y)
+
+            Label(Frm_tabla_puntajes, text=entrada['nombre'],
+              font=(FUENTE, 13),
+              bg=bg_fila,
+              fg=color_texto,
+              width=18).place(x=70, y=y)
+
+            Label(Frm_tabla_puntajes, text=entrada.get('avatar', '?'),
+              font=(FUENTE, 13),
+              bg=bg_fila,
+              fg=color_texto,
+              width=14).place(x=290, y=y)
+
+            Label(Frm_tabla_puntajes, text=str(entrada['puntaje']),
+              font=(FUENTE, 13),
+              bg=bg_fila,
+              fg=color_texto,
+              width=10).place(x=500, y=y)
+
+def FUNC_Btn_volver_desde_puntajes():
+    ReproducirBeep()
+    CambiarPantalla(Pantalla_principal)
+
+Btn_volver_puntajes = Button(Pantalla_puntajes, text='VOLVER AL INICIO',
+    width=400, height=47,
+    bg="#8A3664", image=px,
+    compound=CENTER, font=(FUENTE, 20),
+    borderwidth=10, relief="raised",
+    activebackground='#192301', fg='#f1f1f1',
+    activeforeground='#f1f1f1', command=FUNC_Btn_volver_desde_puntajes)
+Btn_volver_puntajes.place(x=WIDTH//2 - 200, y=530)
+
+def CambiarPantallaPuntajes(pantalla):
+    CambiarPantalla(pantalla)
+    ActualizarPantallaPuntajes()
+    
+    
 VENTANA.mainloop()
