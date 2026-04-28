@@ -959,20 +959,6 @@ Btn_confirmar_pokemones.place(x=378, y=580)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 '''
 
 PANTALLA
@@ -1002,6 +988,7 @@ turno_bloqueado = False
 
 Pantalla_Combate_Pokemon = Canvas(VENTANA, bg="#0d0d1a", width=WIDTH, height=HEIGHT, highlightthickness=0)
 
+# Al cambio de pantalla 
 def IniciarCombate():
     global pokemon_activo_jugador
     global pokemon_activo_rival
@@ -1075,13 +1062,13 @@ def TurnoJugador():
     atacante = pokemones_jugador[pokemon_activo_jugador]
     defensor = pokemones_rival[pokemon_activo_rival]
 
-    daño = Atacar(atacante, defensor)  # CAMBIO 1: guardar el valor retornado por Atacar()
+    daño = Atacar(atacante, defensor) 
 
-    MostrarMensaje(f"{pokemon_activo_jugador} ataco a {pokemon_activo_rival} e hizo {daño} de daño")  # CAMBIO 2: mostrar mensaje con el daño
+    MostrarMensaje(f"{pokemon_activo_jugador} ataco a {pokemon_activo_rival} e hizo {daño} de daño")
     ActualizarPantalladeCombate()
-    VerificarKO()  # CAMBIO 3: verificar si el rival cayó en KO después del ataque del jugador
+    VerificarKO() 
 
-    # Solo programar turno rival si aún hay pokemones vivos de ambos lados
+    # turno rival solo si hay pokemones vivos
     if PokemonesVivos(pokemones_rival) != [] and PokemonesVivos(pokemones_jugador) != []:
         VENTANA.after(2000, TurnoRival)
 
@@ -1343,7 +1330,7 @@ def ActualizarInfoFrame(frame, nombre_entrenador, nombre_pokemon, stats, es_juga
                          bg='#111133', highlightthickness=0)
     Cnv_bolitas.place(x=10, y=2)
 
-    i=0
+    i=0 # Crear bolitas
     for nombre_pokemon in dict_pokemones:
         stat = dict_pokemones[nombre_pokemon]
 
